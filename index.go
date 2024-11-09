@@ -60,3 +60,12 @@ func pageContent(w http.ResponseWriter, r *http.Request) {
 func initHandler(w http.ResponseWriter, r *http.Request) {
         pageContent(w, r)
 }
+
+func main() {
+        fmt.Println("Запуск сервера...")
+        http.HandleFunc("/", initHandler)
+        err := http.ListenAndServe(":8080", nil)
+        if err != nil {
+                fmt.Printf("Ошибка запуска сервера: %v\n", err)
+        }
+}
