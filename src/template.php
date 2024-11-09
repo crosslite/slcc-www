@@ -1,2 +1,0 @@
-<?php page_content(); ?>
-

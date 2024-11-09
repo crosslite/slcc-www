@@ -10,62 +10,64 @@ import (
         "strings"
 )
 
-// Функция для перенаправления
 func redirect(w http.ResponseWriter, r *http.Request, newPath string) {
         http.Redirect(w, r, newPath, http.StatusFound)
 }
 
-// Основная функция обработки страниц
 func pageContent(w http.ResponseWriter, r *http.Request) {
-        // Получаем текущую рабочую директорию
         cwd, _ := os.Getwd()
 
-        // Выполняем команду `make` в директории onlinedocs/texi
-        cmd := exec.Command("make")
-        cmd.Dir = filepath.Join(cwd, "onlinedocs", "texi")
-        if err := cmd.Run(); err != nil {
-                http.Error(w, "Ошибка выполнения команды 'make'", http.StatusInternalServerError)
-                return
+        if 0 != 0 {
+                cmd := exec.Command("make")
+                cmd.Dir = filepath.Join(cwd, "onlinedocs", "texi")
+                if err := cmd.Run(); err != nil {
+                        http.Error(w, "Error executing the 'make' command", http.StatusInternalServerError)
+                        return
+                }
         }
 
-        file := r.URL.Path
+        file := "." + r.URL.Path
 
-        // Проверяем URL пути
         switch {
         case file == "/", file == "/master/", file == "/master":
                 redirect(w, r, "/onlinedocs/master/index.html")
                 return
         default:
-                path := filepath.Join(cwd, "onlinedocs", file)
-                if !strings.HasSuffix(file, ".html") {
+                path := filepath.Join(cwd, file)
+                if !strings.HasSuffix(file, ".html") && !strings.HasSuffix(file, ".css") {
                         path += ".html"
                 }
 
-                // Проверка существования файла
                 if _, err := os.Stat(path); os.IsNotExist(err) {
-                        path = filepath.Join(cwd, "onlinedocs", "static", "404.html")
+                        fmt.Println(path)
+                        path = filepath.Join(cwd, "onlinedocs", "404.html")
                 }
 
                 content, err := ioutil.ReadFile(path)
                 if err != nil {
-                        http.Error(w, "Ошибка чтения файла", http.StatusInternalServerError)
+                        http.Error(w, "File reading error", http.StatusInternalServerError)
                         return
+                }
+
+                if strings.HasSuffix(file, ".css") {
+                        w.Header().Set("Content-Type", "text/css; charset=utf-8")
+                } else {
+                        w.Header().Set("Content-Type", "text/html; charset=utf-8")
                 }
 
                 w.Write(content)
         }
 }
 
-// Обработчик запросов
 func initHandler(w http.ResponseWriter, r *http.Request) {
         pageContent(w, r)
 }
 
 func main() {
-        fmt.Println("Запуск сервера...")
+        fmt.Println("Starting the server...")
         http.HandleFunc("/", initHandler)
         err := http.ListenAndServe(":8080", nil)
         if err != nil {
-                fmt.Printf("Ошибка запуска сервера: %v\n", err)
+                fmt.Printf("Server startup error: %v\n", err)
         }
 }
